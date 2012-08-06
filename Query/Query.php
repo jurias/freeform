@@ -16,7 +16,7 @@ class Query
     }
     else
     {
-      throw new Exception("Method not found");
+      throw new \Exception("Method not found");
     }
   }
 }
