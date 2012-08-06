@@ -18,11 +18,14 @@ class Freeform
 
   public static $models;
 
+  public static $config;
+
   public static $schema;
 
   public static function connect($config)
   {
     $config += self::$db_defaults;
+    self::$config = $config;
 
     $datasource = $config['datasource'];
     $host = $config['host'];
@@ -42,7 +45,7 @@ class Freeform
             FROM information_schema.columns 
             WHERE TABLE_SCHEMA = ?";
     $query = self::$db->prepare($sql);
-    $query->execute(array('orm_test'));
+    $query->execute(array(self::$config['database']));
     
     foreach($query->fetchAll(PDO::FETCH_ASSOC) as $column)
     {

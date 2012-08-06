@@ -20,6 +20,8 @@ class Model
   
   static $many_to_many = array();
 
+  static $validate = array();
+
   private static $metadata;
 
   private $fields;
