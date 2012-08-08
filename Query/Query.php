@@ -2,11 +2,13 @@
 
 namespace Freeform\Query;
 
+use Freeform\Lib\Inflector;
+
 class Query
 {
   public static final function __callStatic($class, $args)
   {
-    $class = __NAMESPACE__ . '\\' . $class;
+    $class = __NAMESPACE__ . '\\' . Inflector::classify($class);
 
     if (class_exists($class))
     {
