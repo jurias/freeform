@@ -294,7 +294,11 @@ class Model
 
   public function update($params)
   {
-    
+    foreach ($params as $field => $value) {
+      $this->$field = $value;
+    }
+
+    return $this->save();
   }
 
   public function delete()

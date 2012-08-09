@@ -3,7 +3,6 @@
 namespace Freeform\Query;
 
 use Freeform\Freeform;
-use Pdo;
 
 class Update extends AbstractQuery
 {
