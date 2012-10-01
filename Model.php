@@ -223,11 +223,15 @@ class Model
    */
   public function __get($property)
   {
+    $result = null;
+
     $relation_types = array('has_one', 'has_many', 'belongs_to', 'many_to_many');
     foreach ($relation_types as $relation_type) {
       $relations = self::get($relation_type);
       if (array_key_exists($property, $relations)) {
-        return $this->$relation_type($property, $relations[$property]);
+        $this->$property = $this->$relation_type($property, $relations[$property]);
+  
+        return $this->$property;
       }
     }
 
@@ -261,7 +265,8 @@ class Model
 
   public function belongs_to($model, $options = array())
   {
-    if (!class_exists($model))
+    $model = Inflector::singularize($model);
+    if (class_exists(self::get('namespace') . '\\' . $model))
       $model = self::get('namespace') . '\\' . $model;
 
     $defaults = array(
@@ -284,7 +289,8 @@ class Model
 
   public function has_many($model, $options = array())
   {
-    if (!class_exists($model))
+    $model = Inflector::singularize($model);
+    if (class_exists(self::get('namespace') . '\\' . $model))
       $model = self::get('namespace') . '\\' . $model;
 
     $defaults = array(
