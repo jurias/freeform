@@ -2,6 +2,7 @@
 
 namespace Freeform;
 
+use Freeform\Freeform;
 use Freeform\Query\Query;
 use Freeform\Lib\Helpers;
 use Freeform\Lib\Inflector;
@@ -59,132 +60,28 @@ class Model
     {
       $reflector = new \ReflectionClass($class);
       $data = $reflector->getDefaultProperties();
+      $data['model'] = explode('\\', $class);
+      $data['model'] = end($data['model']);
       $data['class'] = $class;
+      $data['namespace'] = $reflector->getNamespaceName();
       $data['table'] = $data['table'] ?: Helpers::tableize($class);
 
-      $data['has_many'] = self::init_has_many($data['has_many']);
-      $data['belongs_to'] = self::init_belongs_to($data['belongs_to']);
-      $data['many_to_many'] = self::init_many_to_many($data['many_to_many']);
+      // Format relation data
+      $relation_types = array('has_one', 'has_many', 'belongs_to', 'many_to_many');
+      foreach ((array) $relation_types as $relation_type) {
+        $data[$relation_type] = (array) $data[$relation_type];
+        foreach ($data[$relation_type] as $key => $value) {
+          if (is_scalar($value)) {
+            $data[$relation_type][$value] = array();
+            unset($data[$relation_type][$key]);                        
+          }
+        }
+      }
 
       self::$metadata[$class] = $data;
     }
 
     return self::$metadata[$class][$var];
-  }
-
-  private static function init_belongs_to($relations)
-  {
-    $ns_class = get_called_class();
-    $class = explode('\\', $ns_class);
-    $class = end($class);
-    $relations = (array) $relations;
-    $reflector = new \ReflectionClass($ns_class);
-    $ns = $reflector->getNamespaceName();
-      
-    $formatted = array();
-    foreach ($relations as $key => $relation) {
-      if (is_string($relation))
-        $formatted[$relation] = array();
-      else
-        $formatted[$key] = $relation;
-    }
-    $relations = $formatted;
-
-    foreach ($relations as $model => &$settings) {
-      $defaults = 
-      array(
-        "class" => "$ns\\" . Inflector::classify($model),
-        "local_key" => Inflector::underscore($model) . "_id",
-        "foreign_key" => "id",
-
-      );
-      $settings += $defaults;
-    }
-
-    return $relations;
-  }
-
-  /**
-   * Initialize has_many relations.
-   *
-   */
-  private static function init_has_many($relations)
-  {
-    $ns_class = get_called_class();
-    $class = explode('\\', $ns_class);
-    $class = end($class);
-    $relations = (array) $relations;
-    $reflector = new \ReflectionClass($ns_class);
-    $ns = $reflector->getNamespaceName();
-      
-    $formatted = array();
-    foreach ($relations as $key => $relation) {
-      if (is_string($relation))
-        $formatted[$relation] = array();
-      else
-        $formatted[$key] = $relation;
-    }
-    $relations = $formatted;
-
-    foreach ($relations as $model => &$settings) {
-      $defaults = 
-      array(
-        "class" => "$ns\\" . Inflector::classify($model),
-        "table" => Inflector::tableize($model),
-        "local_key" => "id",
-        "foreign_key" => Inflector::underscore($class) . "_id",
-      );
-      $settings += $defaults;
-    }
-
-    return $relations;
-  }
-
-  /**
-   * Initialize many_to_many relations.
-   *
-   */
-  private static function init_many_to_many($relations)
-  {
-    $ns_class = get_called_class();
-    $class = explode('\\', $ns_class);
-    $class = end($class);
-    $relations = (array) $relations;
-    $reflector = new \ReflectionClass($ns_class);
-    $ns = $reflector->getNamespaceName();
-      
-    $formatted = array();
-    foreach ($relations as $key => $relation) {
-      if (is_string($relation))
-        $formatted[$relation] = array();
-      else
-        $formatted[$key] = $relation;
-    }
-    $relations = $formatted;
-
-    foreach ($relations as $model => &$settings) {
-      $classes = array(Inflector::tableize($class), Inflector::tableize($model));
-      sort($classes);
-
-      $defaults = 
-      array(
-        "class" => "$ns\\" . Inflector::classify($model),
-        "table" => Inflector::tableize($model),
-        "local_key" => "id",
-        "foreign_key" => Inflector::underscore($class) . "_id",
-        
-        "join_table" => join('_',$classes),
-        "join_table_this_key" => '',
-        "join_table_that_key" => '',
-        "target_table" => '',
-        "target_table_key" => '',
-      );
-      $settings += $defaults;
-    }
-
-    // print_r($relations); die;
-
-    return $relations;
   }
 
   private function getData()
@@ -239,7 +136,7 @@ class Model
     return $results;
   }
 
-  public static function search($params, $operator = 'OR')
+  public static function search($params = array(), $operator = 'OR')
   {
     $class = get_called_class();
     $table = Helpers::tableize($class);
@@ -326,37 +223,15 @@ class Model
    */
   public function __get($property)
   {
-    $class = get_called_class();
-
-    $has_many = self::get('has_many');
-    $belongs_to = self::get('belongs_to');
-    $many_to_many = self::get('many_to_many');
-    
-    if (isset($has_many[$property]))
-    {
-      $relation = $has_many[$property];
-      $params = array($relation['foreign_key'] => $this->$relation['local_key']);
-      $results = $relation['class']::find($params);
-
-      return $results;
+    $relation_types = array('has_one', 'has_many', 'belongs_to', 'many_to_many');
+    foreach ($relation_types as $relation_type) {
+      $relations = self::get($relation_type);
+      if (array_key_exists($property, $relations)) {
+        return $this->$relation_type($property, $relations[$property]);
+      }
     }
-    if (isset($belongs_to[$property]))
-    {
-      $relation = $belongs_to[$property];
-      $params = array($relation['foreign_key'] => $this->$relation['local_key']);
-      $results = $relation['class']::find($params);
 
-      return $results[0];
-    }
-    if (isset($many_to_many[$property]))
-    {
-      $relation = $many_to_many[$property];
-      $join_table = $relation['join_table'];
-
-      return $relation['class']::find();
-    }
-    
-    throw new \Exception("Undefined property: $class::$property");
+    throw new \Exception("Undefined property: " . get_called_class() . "::$property");
   }
 
   public function validate()
@@ -382,5 +257,84 @@ class Model
     $this->errors = $errors;
 
     return empty($errors);
+  }
+
+  public function belongs_to($model, $options = array())
+  {
+    if (!class_exists($model))
+      $model = self::get('namespace') . '\\' . $model;
+
+    $defaults = array(
+      'class' => Inflector::classify($model),
+      'local_key' => Helpers::propertize($model) . '_id',
+      'foreign_key' => 'id',
+    );
+    $options = $options + $defaults;
+    $query = array($options['foreign_key'] => $this->{$options['local_key']});
+    $result = $options['class']::find($query);
+
+    return pos($result);
+  } 
+
+  public function has_one($model, $options = array())
+  {
+    $result = call_user_func_array("self::has_many", func_get_args());
+    return pos($result);
+  } 
+
+  public function has_many($model, $options = array())
+  {
+    if (!class_exists($model))
+      $model = self::get('namespace') . '\\' . $model;
+
+    $defaults = array(
+      'class' => Inflector::classify($model),
+      'local_key' => 'id',
+      'foreign_key' => Inflector::underscore($this->get('model')) . '_id',
+    );
+    $options = $options + $defaults;
+    $query = array($options['foreign_key'] => $this->{$options['local_key']});
+    $result = $options['class']::find($query);
+
+    return $result;
+  }
+
+  public function many_to_many($model, $options = array())
+  {
+    if (!class_exists($model))
+      $model = self::get('namespace') . '\\' . Inflector::classify($model);
+    $classes = array(self::get('table'), Helpers::tableize($model));
+    sort($classes);
+
+    $defaults = array(
+      "class" => $model,
+      "local_key" => 'id',
+      "foreign_key" => 'id',
+      "join_table" => join('_',$classes),
+      "join_table_this_key" => Helpers::propertize(self::get('model')) . "_id",
+      "join_table_that_key" => Helpers::propertize($model) . "_id",
+      "target_table" => Helpers::tableize($model),
+    );
+    $options += $defaults;
+
+    $sql = "SELECT {$options['target_table']}.*
+            FROM {$options['target_table']}
+            JOIN {$options['join_table']} 
+              ON {$options['join_table']}.{$options['join_table_that_key']} 
+                = {$options['target_table']}.{$options['foreign_key']}
+              AND {$options['join_table']}.{$options['join_table_this_key']}
+                ={$this->{$options['local_key']}}";
+    $result = $options['class']::sql($sql);
+    
+    return $result;
+  }
+
+  public static function sql($sql, $bound_params = array())
+  {
+    $query = Freeform::$db->prepare($sql);
+    $query->execute($bound_params);
+    $results = $query->fetchAll(\Pdo::FETCH_CLASS, self::get('class'));
+
+    return $results;
   }
 }

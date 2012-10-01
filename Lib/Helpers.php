@@ -12,6 +12,14 @@ class Helpers
     return Inflector::tableize($class);
   }
 
+  public static function propertize($class)
+  {
+    $class = explode("\\", $class);
+    $class = end($class); 
+
+    return Inflector::underscore($class);
+  }
+
   public static function get_namespace($class)
   {
     $class = explode('\\', $class);

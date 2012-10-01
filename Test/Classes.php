@@ -39,9 +39,15 @@ class Reply extends Model
 class User extends Model
 {
   static $has_many = array('posts', 'replies');
+  static $has_one = 'profile';
 }
 
 class Tag extends Model
 {
   static $has_and_belongs_to_many = 'Post';
+}
+
+class Profile extends Model
+{
+  static $belongs_to = 'user';
 }

@@ -119,14 +119,23 @@ test('validate', function(){
 });
 
 
-test("belongs_to", function(){
-  test("should return single result with parent class", function(){
-    $result = \Models\Post::find(1)->user;
+test("belongs_to()", function(){
+  $post = \Models\Post::find(1);
+
+  test("should return single result with parent class", function() use ($post) {
+    $result = $post->belongs_to('Models\User');
     verify($result)->is_class('Models\User');
   });
 
-  test("with non-standard fields should return result", function(){
-    $result = \Models\Post::find(1)->author;
+  test("should match magic getter results", function() use ($post) {
+    $direct = $post->belongs_to('Models\User');
+    $magic = $post->user;
+
+    verify($direct == $magic)->is_true();
+  });
+
+  test("with non-standard fields should return result", function() use ($post) {
+    $result = $post->author;
     verify($result)->is_class('Models\User');
   });
 });
@@ -139,8 +148,9 @@ test('complex relations example', function(){
 
 
 test("has_many", function(){
-  $result = \Models\User::find(1)->posts;
-
+  $user = Models\User::find(1);
+  $result = $user->has_many('Models\Post');
+  
   test("should return an array", function() use($result) {
     verify($result)->is_array();
     verify(count($result))->is_greater_than(0);
@@ -149,17 +159,39 @@ test("has_many", function(){
       verify(get_class($result[0]))->is('Models\Post');
     });
   });
+
+  test('should match magic getter results', function() use ($user, $result) {
+    verify($result == $user->posts)->is_true();
+  });
+});
+
+test("has_one", function() {
+  $user = Models\User::find(1);
+
+  test("should return an object", function() use ($user) {
+    $profile = $user->has_one('Models\Profile');
+    verify($profile)->is_object();
+
+    test("with correct class", function() use ($profile) {
+      verify($profile)->is_class('Models\Profile');
+    });
+  });
 });
 
 test("has_many_through", function(){
-  $result = \Models\Post::find(1)->tags;
+  $post = \Models\Post::find(1);
+  $result = $post->many_to_many('Models\Tag');
 
-  test("should return an array", function() use($result) {
+  test("should return an array with results", function() use($result) {
     verify($result)->is_array();
     verify(count($result))->is_greater_than(0);
     
     test('with elements of child class', function() use($result) {
       verify(get_class($result[0]))->is('Models\Tag');
     });
+  });
+
+  test('should match magic getter results', function() use ($post, $result) {
+    verify($result == $post->tags)->is_true();
   });
 });

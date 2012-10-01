@@ -11,7 +11,7 @@ class Freeform
   private static $db_defaults =
     array(
       'datasource'  => 'mysql',
-      'host'        => 'localhost',
+      'host'        => '127.0.0.1',
       'user'        => 'root',
       'password'    => '',
     );
