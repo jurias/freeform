@@ -36,7 +36,7 @@ class Model
       }
     }
 
-    $table = Helpers::tableize(get_called_class());
+    $table = self::get('table');
     foreach(Freeform::$schema[$table] as $field => $attrs)
     {
       $this->$field = isset($this->$field) ? $this->$field : null;
