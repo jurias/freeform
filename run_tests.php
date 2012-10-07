@@ -1,4 +1,4 @@
 <pre>
 <?php
 
-system('php Lib\Veriphy\Veriphy.php Test\Specs');
+system('php vendor\Veriphy\Veriphy.php Test\Specs');
