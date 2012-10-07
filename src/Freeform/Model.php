@@ -265,7 +265,7 @@ class Model
 
   public function belongs_to($model, $options = array())
   {
-    $model = Inflector::singularize($model);
+    $model = Inflector::classify($model);
     if (class_exists(self::get('namespace') . '\\' . $model))
       $model = self::get('namespace') . '\\' . $model;
 
@@ -289,7 +289,7 @@ class Model
 
   public function has_many($model, $options = array())
   {
-    $model = Inflector::singularize($model);
+    $model = Inflector::classify($model);
     if (class_exists(self::get('namespace') . '\\' . $model))
       $model = self::get('namespace') . '\\' . $model;
 
