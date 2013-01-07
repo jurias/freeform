@@ -195,3 +195,15 @@ test("has_many_through", function(){
     verify($result == $post->tags)->is_true();
   });
 });
+
+test('first', function() {
+  test('should return single record of correct class', function() {
+    $result = \Models\Post::first(array('Title' => 'First Post'));
+    verify($result)->is_class('Models\Post');
+  });
+
+  test('should return false when there are no results', function() {
+    $result = \Models\Post::first(array('id' => 'not_an_id'));
+    verify($result)->is(false);
+  });
+});

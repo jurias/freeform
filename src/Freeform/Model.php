@@ -160,6 +160,14 @@ class Model
     return $results;
   }
 
+  public static function first()
+  {
+    $args = func_get_args();
+    $result = call_user_func_array('self::find', $args);
+
+    return pos($result);
+  }
+
   public function save()
   {
     if (!$this->validate())
