@@ -14,7 +14,7 @@ test('instantiating model', function() {
   });
 
   test('should have null values', function() use($post) {
-    verify($post->id)->is(null);  
+    verify($post->id)->is(null);
   });
 });
 
@@ -23,7 +23,7 @@ test('find', function(){
     $result = \Models\Post::find();
 
     test('should return array', function() use($result) {
-      verify($result)->is_array();  
+      verify($result)->is_array();
       verify(count($result))->is_greater_than(0);
 
       test('with results of appropriate class', function() use($result) {
@@ -61,7 +61,12 @@ test('find', function(){
 
 });
 
-
+test('all() should return array', function(){
+  $result = \Models\Post::all();
+  verify($result)->is_array();
+  verify(count($result))->is_greater_than(0);
+  verify(get_class(pos($result)))->is('Models\Post');
+});
 
 test('crud operations:', function(){
   $post = new \Models\Post();
@@ -73,10 +78,10 @@ test('crud operations:', function(){
   test('should create new record', function() use($post){
     $result = $post->save();
     verify($result)->is_true();
-  
+
     test('and set new id', function() use($post){
       verify((int) $post->id)->is_greater_than(0);
-    
+
       test('and retrieve record using that id', function() use($post){
         $result = \Models\Post::find($post->id);
         verify($result)->is_object();
@@ -93,7 +98,6 @@ test('crud operations:', function(){
 
   test('should delete record', function() use($post){
     $id = $post->id;
-  
     $result = $post->delete();
     verify($result)->is_true();
 
@@ -150,11 +154,11 @@ test('complex relations example', function(){
 test("has_many", function(){
   $user = Models\User::find(1);
   $result = $user->has_many('Models\Post');
-  
+
   test("should return an array", function() use($result) {
     verify($result)->is_array();
     verify(count($result))->is_greater_than(0);
-    
+
     test('with elements of child class', function() use($result) {
       verify(get_class($result[0]))->is('Models\Post');
     });
@@ -185,7 +189,7 @@ test("has_many_through", function(){
   test("should return an array with results", function() use($result) {
     verify($result)->is_array();
     verify(count($result))->is_greater_than(0);
-    
+
     test('with elements of child class', function() use($result) {
       verify(get_class($result[0]))->is('Models\Tag');
     });
@@ -194,6 +198,11 @@ test("has_many_through", function(){
   test('should match magic getter results', function() use ($post, $result) {
     verify($result == $post->tags)->is_true();
   });
+});
+
+test('isset()', function() {
+  $post = \Models\Post::find(1);
+  verify(isset($post->replies))->is_true();
 });
 
 test('first', function() {

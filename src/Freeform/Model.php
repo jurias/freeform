@@ -136,6 +136,11 @@ class Model
     return $results;
   }
 
+  public static function all()
+  {
+    return self::find();
+  }
+
   public static function search($params = array(), $operator = 'OR')
   {
     $class = get_called_class();
@@ -244,6 +249,16 @@ class Model
     }
 
     throw new \Exception("Undefined property: " . get_called_class() . "::$property");
+  }
+
+  public function __isset($property)
+  {
+    $relation_types = array('has_one', 'has_many', 'belongs_to', 'many_to_many');
+    foreach ($relation_types as $relation_type)
+      if (array_key_exists($property, self::get($relation_type)))
+        return true;
+
+    return false;
   }
 
   public function validate()
