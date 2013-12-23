@@ -203,6 +203,7 @@ test("has_many_through", function(){
 test('isset()', function() {
   $post = \Models\Post::find(1);
   verify(isset($post->replies))->is_true();
+  verify(isset($post->non_existent))->is_false();
 });
 
 test('first', function() {

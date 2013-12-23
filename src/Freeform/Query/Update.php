@@ -19,8 +19,8 @@ class Update extends AbstractQuery
     $parts = array();
 
     $parts[] = "REPLACE INTO $this->table";
-    $parts[] = "(" . join(', ', $this->fields) . ")";
-    $parts[] = "VALUES"; 
+    $parts[] = "(`" . join('`, `', $this->fields) . "`)";
+    $parts[] = "VALUES";
     $parts[] = "(" . join(', ', $this->values) . ")";
 
 
@@ -48,7 +48,7 @@ class Update extends AbstractQuery
     $sql = $this->buildSql();
 
     $query = Freeform::$db->prepare($sql);
-    
+
     return $query->execute($this->bound_params);
   }
 }
